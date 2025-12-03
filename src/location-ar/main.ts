@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MODEL_URLS } from '../models';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { LocationScene, metersToLonDelta } from '../location/core';
 import { setupUiMinimizer } from '../location/uiToggle';
@@ -575,11 +576,14 @@ function getModelUrl(kind: ModelKind, target: Target): string {
   const suimonConfig = getSuimonConfigForTarget(target);
   // suimon タイプかつ suimon.yaml に modelFile があればそれを優先
   if (kind === 'suimon' && suimonConfig?.modelFile) {
-    return `/assets/${suimonConfig.modelFile}`;
+    // suimon.yaml の modelFile も src/models/ 直下に置く前提で、Vite の URL 解決を使う
+    if (suimonConfig.modelFile === 'Duck.glb') return MODEL_URLS.duck;
+    if (suimonConfig.modelFile === 'suimon-kousin.glb') return MODEL_URLS.suimon;
+    if (suimonConfig.modelFile === 'wankosoba.glb') return MODEL_URLS.wankosoba;
   }
-  if (kind === 'suimon') return '/assets/suimon-kousin.glb';
-  if (kind === 'wankosoba') return '/assets/wankosoba.glb';
-  return '/assets/Duck.glb';
+  if (kind === 'suimon') return MODEL_URLS.suimon;
+  if (kind === 'wankosoba') return MODEL_URLS.wankosoba;
+  return MODEL_URLS.duck;
 }
 
 function applySuimonTransform(obj: THREE.Object3D, target: Target) {

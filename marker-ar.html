@@ -43,11 +43,11 @@
         vr-mode-ui="enabled: false"
         renderer="logarithmicDepthBuffer: true; precision: medium;"
     >
-        <!-- アセット管理（Vite の public/assets 配下の GLB を参照） -->
+        <!-- アセット管理（GLB の実パスは TypeScript から設定） -->
         <a-assets>
-            <a-asset-item id="duck-model" src="/assets/Duck.glb"></a-asset-item>
-            <a-asset-item id="suimon-model" src="/assets/suimon-kousin.glb"></a-asset-item>
-            <a-asset-item id="wanko-model" src="/assets/wankosoba.glb"></a-asset-item>
+            <a-asset-item id="duck-model" data-model="duck"></a-asset-item>
+            <a-asset-item id="suimon-model" data-model="suimon"></a-asset-item>
+            <a-asset-item id="wanko-model" data-model="wankosoba"></a-asset-item>
         </a-assets>
 
         <!-- マーカー: Hiro -->
@@ -97,6 +97,7 @@
         <a-entity camera></a-entity>
     </a-scene>
 
+    <script type="module" src="/src/marker-ar/main.ts"></script>
     <script>
         function goBack() {
             window.location.href = 'index.html';
