@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Location AR - GPS Model Display (LocAR.js)</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="LocAR.js を使って特定地点にモデルを表示する位置情報ベースARデモ"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      .ui-back-button {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 9999;
+        padding: 10px 16px;
+        font-size: 16px;
+        border: none;
+        border-radius: 999px;
+        background: rgba(20, 24, 33, 0.85);
+        color: #ffffff;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        cursor: pointer;
+      }
+
+      .ui-back-button:hover {
+        filter: brightness(1.1);
+      }
+
+      .info-panel {
+        position: fixed;
+        z-index: 9998;
+        background: rgba(15, 18, 26, 0.88);
+        color: #ffffff;
+        padding: 16px 20px;
+        border-radius: 14px;
+        width: 300px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(6px);
+        right: 16px;
+      }
+
+      /* 上部: モデル位置などの調整パネル */
+      .info-panel-model {
+        top: 16px;
+      }
+
+      /* 下部: 位置情報パネル */
+      .info-panel-status {
+        bottom: 16px;
+      }
+
+      .info-header {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 6px 12px;
+        font-size: 14px;
+      }
+
+      .info-label {
+        opacity: 0.7;
+      }
+
+      .info-value {
+        font-weight: 500;
+        word-break: break-word;
+      }
+
+      .info-control {
+        width: 100%;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        font-size: 14px;
+        appearance: none;
+      }
+
+      .info-control:focus {
+        outline: none;
+        border-color: #4e9bff;
+        background: rgba(78, 155, 255, 0.15);
+      }
+
+      .height-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .height-control input[type="range"] {
+        flex: 1;
+        accent-color: #4e9bff;
+      }
+
+      .height-value {
+        min-width: 60px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ui-toggle-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10000;
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: none;
+        font-size: 13px;
+        font-weight: 600;
+        background: rgba(15, 18, 26, 0.85);
+        color: #ffffff;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+      }
+
+      .ui-toggle-button:hover {
+        opacity: 0.85;
+      }
+
+      body.ui-minimized .info-panel,
+      body.ui-minimized #motion-permission-button {
+        display: none !important;
+      }
+
+      body.ui-minimized .ui-toggle-button {
+        background: rgba(15, 18, 26, 0.6);
+      }
+    </style>
+  </head>
+
+  <body style="margin: 0; overflow: hidden;">
+    <button
+      class="ui-back-button"
+      type="button"
+      onclick="window.location.href='index.html'"
+    >
+      ← ホーム
+    </button>
+
+    <button
+      id="motion-permission-button"
+      style="position: fixed; top: 16px; right: 16px; z-index: 9999; padding: 12px 18px; font-size: 16px; border-radius: 999px; border: none; background: rgba(20, 24, 33, 0.85); color: #ffffff; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);"
+    >
+      🎯 モーション許可
+    </button>
+
+    <!-- モデル / 地点 / モデル調整用パネル -->
+    <div class="info-panel info-panel-model" id="model-panel">
+      <div class="info-header">
+        <span>🎛 モデル &amp; 地点設定</span>
+        <span id="info-status">初期化待ち...</span>
+      </div>
+      <div class="info-grid">
+        <span class="info-label">モデル選択</span>
+        <span class="info-value">
+          <select id="model-select" class="info-control">
+            <option value="">自動 (地点ごと)</option>
+            <option value="duck">Duck</option>
+            <option value="suimon">Suimon</option>
+            <option value="wankosoba">Wankosoba</option>
+          </select>
+        </span>
+        <span class="info-label">地点選択</span>
+        <span class="info-value">
+          <select id="target-select" class="info-control"></select>
+        </span>
+        <span class="info-label">モデル高さ</span>
+        <span class="info-value">
+          <div class="height-control">
+            <input
+              type="range"
+              id="height-slider"
+              min="0"
+              max="100"
+              step="0.5"
+              value="1"
+            />
+            <span class="height-value" id="height-value">1.0 m</span>
+          </div>
+        </span>
+        <span class="info-label">モデルサイズ (m)</span>
+        <span class="info-value">
+          <div class="height-control">
+            <input
+              type="number"
+              id="size-input"
+              min="0.05"
+              max="100"
+              step="0.05"
+              value="1"
+              class="info-control"
+            />
+            <span class="height-value" id="size-value">1.00 m</span>
+          </div>
+        </span>
+        <span class="info-label">モデル向き (Y)</span>
+        <span class="info-value">
+          <div class="height-control">
+            <input
+              type="range"
+              id="rotation-slider"
+              min="-180"
+              max="180"
+              step="1"
+              value="0"
+            />
+            <span class="height-value" id="rotation-value">0°</span>
+          </div>
+        </span>
+      </div>
+    </div>
+
+    <!-- 位置情報確認用パネル -->
+    <div class="info-panel info-panel-status" id="status-panel">
+      <div class="info-header">
+        <span>📍 位置情報</span>
+      </div>
+      <div class="info-grid">
+        <span class="info-label">現在地</span>
+        <span class="info-value" id="info-current">--</span>
+        <span class="info-label">精度</span>
+        <span class="info-value" id="info-accuracy">--</span>
+        <span class="info-label">対象地点</span>
+        <span class="info-value" id="info-target">--</span>
+        <span class="info-label">距離</span>
+        <span class="info-value" id="info-distance">--</span>
+        <span class="info-label">方位</span>
+        <span class="info-value" id="info-bearing">--</span>
+      </div>
+    </div>
+
+    <button id="ui-toggle-button" class="ui-toggle-button" type="button" aria-pressed="false">
+      UI最小化
+    </button>
+
+    <script type="module" src="/src/location-ar/main.ts"></script>
+  </body>
+</html>

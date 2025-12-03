@@ -1,0 +1,51 @@
+# 位置情報のみを定義する YAML
+# suimon.yaml / targets.yaml を参考に、水門まわりの5地点をまとめています。
+locations:
+  - id: suimon-1
+    name: "水門 #1"
+    latitude: 39.80219519075745
+    longitude: 141.13317980590008
+    icon: "🌊"
+    color: "#4e9bff"
+
+  - id: suimon-2
+    name: "水門 #2"
+    latitude: 39.80314253510342
+    longitude: 141.13606258796432
+    icon: "🌊"
+    color: "#4e9bff"
+
+  - id: suimon-3
+    name: "水門 #3"
+    latitude: 39.802007370732724
+    longitude: 141.1355385713421
+    icon: "🌊"
+    color: "#4e9bff"
+
+  - id: suimon-4
+    name: "水門 #4"
+    latitude: 39.80279443153987
+    longitude: 141.13434547274002
+    icon: "🌊"
+    color: "#4e9bff"
+
+  - id: suimon-5
+    name: "水門 #5"
+    latitude: 39.80336650658442
+    longitude: 141.13296978414344
+    icon: "🌊"
+    color: "#4e9bff"
+
+  - id: suimon-6
+    name: "水門 #6"
+    latitude: 39.29844365684667
+    longitude: 141.12411389547805
+    icon: "🌊"
+    color: "#4e9bff"
+
+  - id: suimon-7
+    name: "水門 #7"
+    latitude: 39.299216494142705
+    longitude: 141.12382711660644
+    icon: "🌊"
+    color: "#4e9bff"

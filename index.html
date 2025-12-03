@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR デモ ハブ</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Leaflet (OpenStreetMap) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+    <style>
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0c1018; color: #f7f9fc; }
+      .wrap { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+      h1 { margin: 0 0 6px; font-size: 28px; }
+      p.lead { margin: 0 0 20px; opacity: 0.8; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+      .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px 18px; box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
+      .card h2 { margin: 0 0 8px; font-size: 18px; }
+      .card p { margin: 0 0 12px; line-height: 1.6; opacity: 0.9; }
+      .btn { display: inline-block; padding: 10px 14px; border-radius: 10px; background: linear-gradient(135deg, #4e9bff, #6ad0ff); color: #0c1018; font-weight: 700; text-decoration: none; }
+      .note { margin-top: 24px; font-size: 14px; opacity: 0.75; line-height: 1.6; }
+      .marker { margin-top: 24px; text-align: center; }
+      .marker img { max-width: 220px; width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); }
+      .map-section { margin-top: 32px; }
+      .map-section h2 { margin: 0 0 8px; font-size: 18px; }
+      .map-section p { margin: 0 0 12px; font-size: 14px; opacity: 0.8; }
+      #locations-map { width: 100%; height: 360px; border-radius: 12px; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>AR デモ ハブ</h1>
+      <p class="lead">Hiro マーカー AR と、水門付近の固定地点 AR（suimon.yaml ベース）の 2 ページ構成です。</p>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Hiro マーカー AR</h2>
+          <p>Hiro マーカー上に 3 つの GLB (Duck / Suimon / Wankosoba) を表示するデモ。</p>
+          <a class="btn" href="marker-ar.html">開く</a>
+        </div>
+
+        <div class="card">
+          <h2>固定地点 AR（suimon ベース）</h2>
+          <p>suimon.yaml / targets.yaml の座標を元に、水門周辺の固定地点に Duck / Suimon / Wankosoba モデルを配置するロケーション AR。</p>
+          <a class="btn" href="location-ar.html">開く</a>
+        </div>
+      </div>
+
+      <div class="marker">
+        <p>マーカーページ用 Hiro 画像</p>
+        <img src="./assets/markers/hiro.png" alt="hiro marker" />
+      </div>
+
+      <div class="map-section">
+        <h2>水門地点マップ</h2>
+        <p>config/locations.yaml に定義された地点を OpenStreetMap 上にプロットしています。</p>
+        <div id="locations-map"></div>
+      </div>
+
+      <div class="note">
+        ・カメラと位置情報の許可が必要です（HTTPS または localhost 推奨）<br />
+        ・GitHub Pages で公開する場合は gitupload フォルダをそのまま配置してください。
+      </div>
+    </div>
+    <!-- js-yaml & Leaflet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin=""
+    ></script>
+    <script>
+      (async function initLocationsMap() {
+        const mapEl = document.getElementById('locations-map');
+        if (!mapEl || typeof L === 'undefined') return;
+
+        const map = L.map('locations-map', { zoomControl: true });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        try {
+          const res = await fetch('config/locations.yaml', { cache: 'no-store' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const text = await res.text();
+          const parsed = (typeof jsyaml !== 'undefined' && jsyaml.load)
+            ? jsyaml.load(text)
+            : null;
+          const raw = Array.isArray(parsed?.locations)
+            ? parsed.locations
+            : Array.isArray(parsed)
+            ? parsed
+            : [];
+
+          const latlngs = [];
+          raw.forEach((loc) => {
+            const lat = Number(loc.latitude ?? loc.lat);
+            const lon = Number(loc.longitude ?? loc.lon);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+            latlngs.push([lat, lon]);
+            const name = (loc.name || loc.id || '地点').toString();
+            const icon = (loc.icon || '📍').toString();
+            L.marker([lat, lon]).addTo(map).bindPopup(icon + ' ' + name);
+          });
+
+          if (latlngs.length) {
+            map.fitBounds(latlngs, { padding: [20, 20] });
+          } else {
+            // デフォルト: 盛岡周辺（適宜変更可）
+            map.setView([39.7021, 141.1544], 14);
+          }
+        } catch (e) {
+          console.warn('locations.yaml の読み込みに失敗しました', e);
+          map.setView([39.7021, 141.1544], 14);
+        }
+      })();
+    </script>
+  </body>
+</html>

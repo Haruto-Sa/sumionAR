@@ -1,0 +1,29 @@
+# モデル情報のみを定義する YAML
+# Duck / Suimon / Wankosoba の3モデルを定義します。
+
+models:
+  - id: duck
+    name: "Duck"
+    kind: duck           # TypeScript 側の ModelKind と対応
+    glb: "Duck.glb"      # public/assets/Duck.glb
+    defaultHeight: 3
+    defaultSize: 12
+    defaultRotationY: 0
+
+  - id: suimon
+    name: "Suimon 水門"
+    kind: suimon
+    glb: "suimon-kousin.glb"  # public/assets/suimon-kousin.glb
+    defaultHeight: 3
+    defaultSize: 12
+    defaultRotationY: 0
+
+  - id: wankosoba
+    name: "Wankosoba"
+    kind: wankosoba
+    glb: "wankosoba.glb" # public/assets/wankosoba.glb
+    defaultHeight: 3
+    defaultSize: 12
+    defaultRotationY: 0
+
+
