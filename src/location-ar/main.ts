@@ -701,6 +701,53 @@ function handlePositionUpdate(position: GeoPosition, source = 'gps-event') {
   console.log(`[gps] update via ${source}`, position);
 }
 
+function setupCopyConfigButton() {
+  const button = document.getElementById('copy-config-button') as HTMLButtonElement | null;
+  if (!button) return;
+
+  button.addEventListener('click', async () => {
+    const target = getSelectedTarget();
+    if (!target) {
+      alert('コピーできる地点がありません。先に地点を選択してください。');
+      return;
+    }
+    const modelKind = state.selectedModelKind ?? 'auto';
+    const lines: string[] = [];
+    lines.push('- id: ' + target.id);
+    if (target.name) {
+      lines.push(`  name: "${target.name}"`);
+    }
+    lines.push(`  latitude: ${target.lat}`);
+    lines.push(`  longitude: ${target.lon}`);
+    lines.push('  model:');
+    lines.push(`    kind: ${modelKind}`);
+    lines.push(`    height: ${state.modelHeight}`);
+    lines.push(`    size: ${state.modelSize}`);
+    lines.push(`    rotationYDeg: ${state.modelRotationDeg}`);
+
+    const text = lines.join('\n');
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      alert('現在の地点・モデル設定をクリップボードにコピーしました。');
+    } catch (error) {
+      console.warn('[copy-config] failed', error);
+      alert('コピーに失敗しました。ブラウザの制限で許可されていない可能性があります。');
+    }
+  });
+}
+
 function setupMotionPermissionButton() {
   const button = document.getElementById('motion-permission-button') as HTMLButtonElement | null;
   if (!button) return;
@@ -739,6 +786,7 @@ function main() {
   setupSizeControl();
   setupRotationControl();
   setupModelControl();
+  setupCopyConfigButton();
   setupUiMinimizer('location-ar');
 
   // 優先的に suimon.yaml から地点リストを構築し、失敗時のみ targets.yaml をフォールバックに使用

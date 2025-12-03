@@ -10,6 +10,8 @@
     <!-- AR.jsとA-Frame（バージョン固定） -->
     <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
     <script src="https://rawcdn.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
+    <!-- js-yaml（models.yaml を扱う場合に使用） -->
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
     
@@ -36,61 +38,49 @@
         <button data-model="wanko" style="border:none;border-radius:999px;padding:6px 10px;background:#e67e22;color:#fff;cursor:pointer;font-weight:bold;">Wankosoba</button>
     </div>
 
-    <!-- A-Frame ARシーン -->
+    <!-- A-Frame ARシーン（モバイルでは背面カメラを優先） -->
     <a-scene
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        arjs="sourceType: webcam; facingMode: environment; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
         vr-mode-ui="enabled: false"
         renderer="logarithmicDepthBuffer: true; precision: medium;"
     >
-        <!-- アセット管理（GLB の実パスは TypeScript から設定） -->
-        <a-assets>
-            <a-asset-item id="duck-model" data-model="duck"></a-asset-item>
-            <a-asset-item id="suimon-model" data-model="suimon"></a-asset-item>
-            <a-asset-item id="wanko-model" data-model="wankosoba"></a-asset-item>
-        </a-assets>
+        <!-- アセット管理（必要に応じて将来利用） -->
+        <a-assets></a-assets>
 
         <!-- マーカー: Hiro -->
         <a-marker preset="hiro">
-            <!-- 3Dモデル: Duck -->
+            <!-- 3Dモデル: Duck（手のひらサイズ想定） -->
             <a-entity
                 id="model-duck"
-                gltf-model="#duck-model"
+                data-model-entity="duck"
                 scale="0.4 0.4 0.4"
-                position="0 0.25 0"
+                position="0 0.2 0"
                 visible="true"
                 animation="property: rotation; to: 0 360 0; loop: true; dur: 9000; easing: linear"
             ></a-entity>
 
-            <!-- 3Dモデル: Suimon（Hiroマーカー上では 1/1000 スケール） -->
+            <!-- 3Dモデル: Suimon（元モデルが非常に大きいため 1/1000 前後まで縮小） -->
             <a-entity
                 id="model-suimon"
-                gltf-model="#suimon-model"
-                scale="0.00045 0.00045 0.00045"
-                position="0 0.25 0"
+                data-model-entity="suimon"
+                scale="0.002 0.002 0.002"
+                position="0 0.2 0"
                 rotation="0 30 0"
                 visible="false"
                 animation="property: rotation; to: 0 -360 0; loop: true; dur: 11000; easing: linear"
             ></a-entity>
 
-            <!-- 3Dモデル: Wankosoba -->
+            <!-- 3Dモデル: Wankosoba（手のひらサイズ想定） -->
             <a-entity
                 id="model-wanko"
-                gltf-model="#wanko-model"
-                scale="0.35 0.35 0.35"
-                position="0 0.25 0"
+                data-model-entity="wanko"
+                scale="0.4 0.4 0.4"
+                position="0 0.2 0"
                 visible="false"
                 animation="property: position; to: 0 0.6 0; dir: alternate; loop: true; dur: 1600; easing: easeInOutQuad"
             ></a-entity>
 
-            <!-- テキストラベル -->
-            <a-text 
-                value="Duck / Suimon / Wankosoba" 
-                position="0 2 0" 
-                align="center" 
-                color="#FFFFFF"
-                scale="1.2 1.2 1.2"
-            ></a-text>
         </a-marker>
 
         <!-- カメラ -->
