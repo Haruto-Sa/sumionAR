@@ -1,50 +1,56 @@
 # sumionAR (Hiro Marker + Location-based AR Demo)
 
-This repository contains a minimal setup for two web-based AR experiences:
+This repository provides a minimal, up-to-date setup for two browser-based AR experiences:
 
 - **Marker AR** – Renders Duck / Suimon / Wankosoba GLB models on a Hiro marker  
-- **Location AR** – Places a 3D model at fixed GPS locations defined in `config/locations.yaml` (using LocAR.js + three.js)
+- **Location AR** – Places 3D models at fixed GPS locations defined in `public/config/locations.yaml` (using LocAR.js + three.js)
+- **Location map** – Shows all locations from `locations.yaml` on an OpenStreetMap map on the top page
 
-## Minimal Project Layout
+---
+
+## Current Project Layout
 
 ```text
 ARjs/
-├── index.html              # Top page (mode selector + OpenStreetMap of locations)
-├── marker-ar.html          # Hiro marker AR
-├── location-ar.html        # Location-based AR (LocAR.js)
-├── styles.css              # Shared styles
+├── index.html               # Top page (mode selector + OpenStreetMap of locations)
+├── marker-ar.html           # Hiro marker AR
+├── location-ar.html         # Location-based AR (LocAR.js)
+├── styles.css               # Shared styles
 ├── public/
-│   └── assets/
+│   ├── assets/
+│   │   └── markers/
+│   │       ├── hiro.png
+│   │       └── pattern-marker.patt
+│   └── config/
+│       ├── locations.yaml   # List of fixed locations (lat/lon, name, icon, color)
+│       └── models.yaml      # Model definitions (Duck / Suimon / Wankosoba)
+├── src/
+│   ├── marker-ar/
+│   │   └── main.ts          # Main logic for marker-based AR
+│   ├── location/
+│   │   ├── core.ts          # Shared LocAR.js + three.js scene setup
+│   │   └── uiToggle.ts      # UI minimize button logic
+│   ├── location-ar/
+│   │   └── main.ts          # Main logic for location-based AR
+│   └── models/
 │       ├── Duck.glb
 │       ├── suimon-kousin.glb
 │       ├── wankosoba.glb
-│       └── markers/
-│           └── hiro.png
-├── config/
-│   ├── locations.yaml      # List of fixed locations (lat/lon, name, icon, color)
-│   └── models.yaml         # Model definitions (GLB filenames, reserved for future use)
-├── src/
-│   ├── location/
-│   │   ├── core.ts         # Shared LocAR + three.js scene setup
-│   │   └── uiToggle.ts     # UI minimize button logic
-│   └── location-ar/
-│       └── main.ts         # Main logic for location-based AR
-├── server.py               # Optional: Python HTTP server with logging (not required)
-├── package.json            # Vite + TypeScript + locar configuration
-├── vite.config.mjs         # Vite config (inputs: index/marker-ar/location-ar, base: /sumionAR/)
-└── .gitignore              # Ignore doc/manual/, node_modules/, dist/, logs, etc.
+│       └── index.ts         # Entry point for model loading
+├── dist/                    # Vite build output (generated, not committed)
+├── doc/
+│   ├── README-en.md         # This file
+│   └── manual/              # Additional manuals
+│       ├── TROUBLESHOOTING.md
+│       ├── SERVER_LOG_README.md
+│       └── setup-ioscheck.md, githubUpload.md, ...
+├── package.json             # Vite + TypeScript configuration
+├── tsconfig.json
+├── vite.config.mjs          # Vite config (inputs: index/marker-ar/location-ar, base: /sumionAR/)
+└── .gitignore               # Ignore node_modules/, dist/, doc/manual/, logs, etc.
 ```
 
-`.gitignore` (excerpt):
-
-```gitignore
-doc/manual/
-
-node_modules/
-dist/
-*.log
-.DS_Store
-```
+---
 
 ## Setup
 
@@ -56,7 +62,7 @@ dist/
 ### Install dependencies
 
 ```bash
-cd /Users/harutosasaki/GithubRepo/ARjs
+cd /path/to/ARjs
 npm install
 ```
 
@@ -66,7 +72,7 @@ npm install
 npm run dev
 ```
 
-Open:
+Then open:
 
 - `http://localhost:8000/` → `index.html` (top page)
 
@@ -79,8 +85,10 @@ npm run build
 ```
 
 This generates static files under `dist/`.  
-You can deploy `dist/` directly to static hosting (e.g. GitHub Pages at `/sumionAR/`).  
+You can deploy `dist/` directly to static hosting (for example, GitHub Pages at `/sumionAR/`).  
 `dist/` itself is ignored by Git via `.gitignore`.
+
+---
 
 ## How to Use
 
@@ -97,12 +105,14 @@ You can deploy `dist/` directly to static hosting (e.g. GitHub Pages at `/sumion
 - Switch between **Duck / Suimon / Wankosoba** via buttons at the bottom of the screen
 - Suimon is rendered at roughly **1/1000** of its original scale on the marker, so it fits nicely
 
+---
+
 ### 2. Location-based AR (`location-ar.html`)
 
 - From the top page, click the **“固定地点 AR（suimon ベース）”** card  
   or open `http://localhost:8000/location-ar.html`
 - Allow camera and geolocation access
-- Models are placed around the positions defined in `config/locations.yaml`
+- Models are placed around the positions defined in `public/config/locations.yaml`
 
 **Top-right panel (model / location / model adjustment)**
 
@@ -125,9 +135,11 @@ You can deploy `dist/` directly to static hosting (e.g. GitHub Pages at `/sumion
 - When height/size/yaw changes, the model is removed and re-added to keep LocAR’s internal coordinate system consistent.
 - GLBs are loaded once and then cloned from an in-memory cache for fast re-spawn.
 
+---
+
 ## Configuration Files
 
-### `config/locations.yaml`
+### `public/config/locations.yaml`
 
 Defines fixed locations. Example:
 
@@ -147,24 +159,46 @@ Whenever you add a location here, it automatically appears in:
 - The **location selector** in `location-ar.html`
 - The **OpenStreetMap map** at the bottom of `index.html` (Leaflet)
 
-### `config/models.yaml`
+### `public/config/models.yaml`
 
-Reserved for listing GLB models (Duck, Suimon, Wankosoba, etc.).  
-Current logic doesn’t read it directly yet, but it’s useful for managing model metadata and future extensions.
+Lists GLB models used by the app (Duck, Suimon, Wankosoba, etc.).  
+The GLB files themselves live under `src/models/` and are resolved by Vite at build time.
+
+---
 
 ## Top-page Map (OpenStreetMap)
 
 `index.html` shows a simple Leaflet + OpenStreetMap map at the bottom:
 
-- Loads `config/locations.yaml` and places markers
+- Loads `public/config/locations.yaml` and places markers
 - Each marker popup shows `icon` + `name`
 - If at least one location exists, the map auto-fits all markers using `fitBounds`
 
-## License / Intended Use
+---
+
+## Documentation
+
+For more detailed notes and troubleshooting, see the documents under `doc/manual/`:
+
+- `doc/manual/TROUBLESHOOTING.md` – common problems and fixes  
+- `doc/manual/SERVER_LOG_README.md` – HTTP server / logging notes (if you use that setup)  
+- `doc/manual/setup-ioscheck.md` – how to test on iOS / mobile  
+- `doc/manual/githubUpload.md` – how to upload to GitHub Pages
+
+---
+
+## Tech Stack and Licenses
 
 This repository is intended for experimentation and learning around:
 
 - Hiro marker AR (A-Frame + AR.js)
 - Location-based AR in the browser (LocAR.js + three.js)
 
-Before reusing it in production or commercially, please also review the licenses of AR.js, A-Frame, LocAR.js, three.js and other dependencies.
+Main libraries used in this project and their licenses:
+
+- three.js — MIT License (© 2010–2025 Mr.doob and contributors)
+- A-Frame — MIT License
+- AR.js — MIT License
+- LocAR.js — MIT License
+
+Before reusing this project in production or commercially, please also review the licenses of the above libraries and any other dependencies.
